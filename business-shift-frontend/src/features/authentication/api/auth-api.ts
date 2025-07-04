@@ -2,7 +2,10 @@ import { fetchClient } from "@/shared/libs/openapi-typescript-fetch/fetch-client
 
 export const authApi = {
   logIn: fetchClient.path("/api/iam/auth/login").method("post").create(),
-  verifyOtp: fetchClient.path("/api/iam/otp/verify").method("post").create(),
+
+sendOtp: fetchClient.path("/api/iam/sendotps/sendOtp").method("post").create(),
+verifyOtp: fetchClient.path("/api/iam/verifys/verify").method("post").create(),
+
   resetPassWord: fetchClient
     .path("/api/iam/auth/reset-password")
     .method("post")
@@ -15,6 +18,6 @@ export const authApi = {
     .path("/api/iam/auth/forgot-password")
     .method("post")
     .create(),
-  sendOtp: fetchClient.path("/api/iam/otp/send").method("post").create(),
+  // sendOtp: fetchClient.path("/api/iam/otp/send").method("post").create(),
   signup: fetchClient.path("/api/employee/create").method("post").create(),
 };

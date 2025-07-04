@@ -16,6 +16,8 @@ import { useRouter } from 'next/navigation';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import Cookies from 'js-cookie';
 import toast from 'react-hot-toast';
+import { useState } from 'react';
+
 import { authApi } from '@/features/authentication/api/auth-api';
 import type { LoginSchemaFields } from '@/features/authentication/form-validators/login-schema';
 import { loginSchema } from '@/features/authentication/form-validators/login-schema';
@@ -25,6 +27,11 @@ import { API_CACHE_KEY } from '@/shared/components/constants/api-cache-key';
 export default function PageLogin() {
   const theme = useTheme();
   const router = useRouter();
+
+  const [otpStep, setOtpStep] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   const {
     handleSubmit,
@@ -49,26 +56,29 @@ export default function PageLogin() {
           message: 'Invalid credentials. Please try again.',
         });
       },
-      onSuccess: (response) => {
-        const { identifier: token, email, name, id } = response.data.user;
-        
-        // Set cookies
-        Cookies.set('token', token, {
-          expires: 7, // 7 days
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict'
-        });
-        
-        Cookies.set('user', JSON.stringify({ email, name, id }), {
-          expires: 7,
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict'
-        });
-        toast.success("you are logged in")
-        router.push('/dashboard');
-      },
+      onSuccess: async (response) => {
+  // const user = response?.data?.user;
+
+  // if (!user) {
+  //   toast.error('Unexpected response from server. Please try again.');
+  //   return;
+  // }
+
+ const { email, name, id, token } = response.data.user;
+
+
+  setUserEmail(email);
+  setUserInfo({ email, name, id, token });
+
+  try {
+    await authApi.sendOtp({ email, purpose: 'login' });
+    setOtpStep(true);
+    toast.success('OTP sent to your email');
+  } catch (err) {
+    toast.error('Failed to send OTP. Try again.');
+  }
+}
+
     }
   );
 
@@ -77,6 +87,37 @@ export default function PageLogin() {
       identifier: formData.identifier.trim().toLowerCase(),
       password: formData.password.trim(),
     });
+  };
+
+  const handleVerifyOtp = async () => {
+    try {
+      await authApi.verifyOtp({
+        identifier: userEmail,
+        otp,
+        purpose: 'login',
+      });
+
+      const { token, email, name, id } = userInfo;
+
+      Cookies.set('token', token, {
+        expires: 7,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      Cookies.set('user', JSON.stringify({ email, name, id }), {
+        expires: 7,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      });
+
+      toast.success('You are logged in');
+      router.push('/dashboard');
+    } catch (err) {
+      toast.error('Invalid OTP. Please try again.');
+    }
   };
 
   return (
@@ -94,6 +135,7 @@ export default function PageLogin() {
         },
       }}
     >
+      {/* Left Column */}
       <Box
         sx={{
           textAlign: 'right',
@@ -105,11 +147,7 @@ export default function PageLogin() {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <Typography
-            fontSize={28}
-            fontWeight={500}
-            color={theme.palette.primary.main}
-          >
+          <Typography fontSize={28} fontWeight={500} color={theme.palette.primary.main}>
             Log into
             <br />
             your account
@@ -123,11 +161,12 @@ export default function PageLogin() {
               borderColor: theme.palette.primary.main,
             }}
           />
-          <Typography fontSize={18} fontWeight={500} sx={{color:'red'}}>
+          <Typography fontSize={18} fontWeight={500} sx={{ color: 'red' }}>
             Alpha Version 1.0
           </Typography>
         </Box>
       </Box>
+
       <Paper
         sx={{
           width: 360,
@@ -157,38 +196,66 @@ export default function PageLogin() {
           Log into your account
         </Typography>
 
-        <FormControl fullWidth sx={{ mb: 1.5 }}>
-          <FormLabel>Email</FormLabel>
-          <TextField
-            autoFocus
-            type="email"
-            placeholder="email"
-            error={Boolean(errors.identifier)}
-            helperText={errors.identifier?.message}
-            {...register('identifier')}
-          />
-        </FormControl>
+        {!otpStep ? (
+          <>
+            {/* Email Field */}
+            <FormControl fullWidth sx={{ mb: 1.5 }}>
+              <FormLabel>Email</FormLabel>
+              <TextField
+                autoFocus
+                type="email"
+                placeholder="email"
+                error={Boolean(errors.identifier)}
+                helperText={errors.identifier?.message}
+                {...register('identifier')}
+              />
+            </FormControl>
 
-        <FormControl fullWidth>
-          <FormLabel>Password</FormLabel>
-          <TextField
-            type="password"
-            placeholder="password"
-            error={Boolean(errors.password)}
-            helperText={errors.password?.message}
-            {...register('password')}
-          />
-        </FormControl>
+            {/* Password Field */}
+            <FormControl fullWidth>
+              <FormLabel>Password</FormLabel>
+              <TextField
+                type="password"
+                placeholder="password"
+                error={Boolean(errors.password)}
+                helperText={errors.password?.message}
+                {...register('password')}
+              />
+            </FormControl>
 
-        <LoadingButton
-          fullWidth
-          disabled={!isDirty}
-          loading={isMutating}
-          type="submit"
-          sx={{ mt: 2 }}
-        >
-          Login
-        </LoadingButton>
+            {/* Login Button */}
+            <LoadingButton
+              fullWidth
+              disabled={!isDirty}
+              loading={isMutating}
+              type="submit"
+              sx={{ mt: 2 }}
+            >
+              Login
+            </LoadingButton>
+          </>
+        ) : (
+          <>
+            {/* OTP Field */}
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <FormLabel>Enter OTP sent to your email</FormLabel>
+              <TextField
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+            </FormControl>
+
+            <LoadingButton
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={handleVerifyOtp}
+              variant="contained"
+            >
+              Verify OTP & Login
+            </LoadingButton>
+          </>
+        )}
       </Paper>
     </Box>
   );
