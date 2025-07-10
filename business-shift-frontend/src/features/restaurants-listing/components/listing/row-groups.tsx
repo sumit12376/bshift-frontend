@@ -18,7 +18,10 @@ export const RowGroups = () => {
     isFetchingMore, 
     loadMore, 
     isLoading, 
-    error 
+    error ,
+        hasMore,
+    totalLoaded,
+    totalDocs,
   } = useInfinitePagination(
     [API_CACHE_KEY.GET_RESTAURANT_LIST, queryParams],//(1) KEY
     (page) =>//(2) FETCHER
@@ -77,15 +80,23 @@ export const RowGroups = () => {
         </Box>
       ))}
 
-      <Box display="flex" justifyContent="center" mt={3}>
-        <Button 
-          onClick={loadMore} 
-          disabled={isFetchingMore}
-          variant="outlined"
-        >
-          {isFetchingMore ? <CircularProgress size={24} /> : 'Load More'}
-        </Button>
-      </Box>
+            {hasMore ? (
+              <Box display="flex" justifyContent="center" p={2}>
+                <Button 
+                  onClick={loadMore} 
+                  disabled={isFetchingMore}
+                  startIcon={isFetchingMore && <CircularProgress size={20} />}
+                >
+                  {isFetchingMore ? 'Loading...' : `Load More (${totalLoaded} of ${totalDocs})`}
+                </Button>
+              </Box>
+            ) : (
+              <Box display="flex" justifyContent="center" p={2}>
+                <Typography variant="body2" color="textSecondary">
+                  All {totalDocs} employees loaded
+                </Typography>
+              </Box>
+            )}
     </>
   );
 };

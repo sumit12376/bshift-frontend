@@ -16,16 +16,19 @@ export const useInfinitePagination: UseInfinitePagination = (
   const {
     size: currentPage,
     setSize: setPage,
-    ...rest
+    data,
+    error,
+    isValidating,
+    mutate,
   } = useSWRInfinite(
     (index) => {
       if (options.skip ?? !key) return null;
-
       return [index + 1, ...(Array.isArray(key) ? key : [key])];
     },
     ([page]: [number]) => fetcher(page),
     {
       ...options,
+      revalidateFirstPage: false,
     },
   );
 
@@ -39,10 +42,9 @@ export const useInfinitePagination: UseInfinitePagination = (
       [serializedKey]: ((params) => {
         const { fromPage, hasNewData } = params ?? {};
 
-        rest.mutate(rest.data, {
+        mutate(undefined, {
           revalidate: (_, swrKey) => {
             const [pageNumber] = swrKey as [number];
-
             return !fromPage || fromPage <= pageNumber;
           },
         });
@@ -58,33 +60,56 @@ export const useInfinitePagination: UseInfinitePagination = (
         const restMutators = Object.fromEntries(
           Object.entries(prev).filter(([k]) => k !== serializedKey)
         );
-
         return restMutators;
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, mutate]);
 
-  const isFirstPage = currentPage === 0;
+  // Calculate if we've reached the end of data
+  const totalLoaded = data?.reduce((sum, page) => sum + (page?.data?.data?.nodes?.length || 0), 0) || 0;
+  const totalDocs = data?.[0]?.data?.data?.metadata?.totaldocs || 0;
+  const hasMore = totalLoaded < totalDocs;
 
-  const isFirstPageLoading = isFirstPage && rest.isLoading;
-
-  const isPageDataUndefined =
-    currentPage > 0 && rest.data?.[currentPage - 1] === undefined;
-
-  const isLoading = rest.isLoading || isFirstPageLoading || isPageDataUndefined;
+  // const isLoadingInitialData = !data && !error;
+  // const isLoadingMore = 
+  //   isValidating && 
+  //   data && 
+  //   typeof data[currentPage - 1] === 'undefined';
 
   return {
-    ...rest,
+    data,
+    error,
+    mutate,
     currentPage,
     loadMore,
-    isLoading,
-    isFetchingMore: !isFirstPage && (isPageDataUndefined || rest.isLoading),
+    // isLoading: isLoadingInitialData,
+    // isFetchingMore: isLoadingMore,
+    hasMore,
+    totalLoaded,
+    totalDocs,
   };
 };
 
 
 
+// const data = [
+//   { // Page 1
+//     data: {          // Axios wrapper
+//       data: {        // Your API response
+//         nodes: [/* 3 employees */],
+//         metadata: { page: 1, size: 3, totaldocs: 6 }
+//       }
+//     }
+//   },
+//   { // Page 2
+//     data: {
+//       data: {
+//         nodes: [/* 3 more employees */],
+//         metadata: { page: 2, size: 3, totaldocs: 6 }
+//       }
+//     }
+//   }
+// ]
 
 
 
@@ -94,40 +119,3 @@ export const useInfinitePagination: UseInfinitePagination = (
 
 
 
-
-
-// 'use client';
-// import useSWRInfinite from 'swr/infinite';
-
-// export const useInfinitePagination = (key, fetcher, options = {}) => {
-//   const {
-//     size: currentPage,
-//     setSize: setPage,
-//     data,
-//     error,
-//     isLoading,
-//     mutate,
-//   } = useSWRInfinite(
-//     (index) => {
-//       if (options.skip ?? !key) return null;
-//       return [index + 1, ...(Array.isArray(key) ? key : [key])];
-//     },
-//     ([page]) => fetcher(page),
-//     options
-//   );
-
-//   const loadMore = () => setPage((prev) => prev + 1);
-
-//   const isFirstPage = currentPage === 0;
-//   const isPageDataMissing = currentPage > 0 && data?.[currentPage - 1] === undefined;
-
-//   return {
-//     data,
-//     error,
-//     mutate,
-//     currentPage,
-//     loadMore,
-//     isLoading: isLoading || (isFirstPage && isLoading) || isPageDataMissing,
-//     isFetchingMore: !isFirstPage && (isPageDataMissing || isLoading),
-//   };
-// };

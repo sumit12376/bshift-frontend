@@ -5,7 +5,7 @@ export const authApi = {
 
 sendOtp: fetchClient.path("/api/iam/sendotps/sendOtp").method("post").create(),
 verifyOtp: fetchClient.path("/api/iam/verifys/verify").method("post").create(),
-
+checkUser: fetchClient.path("/api/iam/auth/checkuser").method("post").create(),
   resetPassWord: fetchClient
     .path("/api/iam/auth/reset-password")
     .method("post")
