@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { customSignup } from '@/utils/api';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,7 @@ type SignupFields = {
   name: string;
   email: string;
   password: string;
+  profile: FileList; 
 };
 
 export default function SignupPage() {
@@ -43,12 +45,13 @@ export default function SignupPage() {
       name: '',
       email: '',
       password: '',
+      profile: undefined as unknown as FileList, 
     },
   });
 
   const { trigger: signupTrigger, isMutating } = useMutation(
     API_CACHE_KEY.SIGNUP,
-    authApi.signup,
+    customSignup,
     {
       onSuccess: () => {
         toast.success('Signup successful. Welcome!');
@@ -59,26 +62,21 @@ export default function SignupPage() {
       },
     }
   );
+
   const onSubmit = async (data: SignupFields) => {
-    console.log(data)
-  try {
-    setUserEmail(data.email);
-    setSignupData(data);
+    try {
+      setUserEmail(data.email);
+      setSignupData(data);
 
-    // const result = await authApi.checkUser({ identifier: data.email });
-    // if ( result?.data?.success) {
-    //   toast.error('User already exists. Please log in.');
-    //   return;
-    // }
-    await authApi.sendOtp({ email: data.email, purpose: 'register' });
-
-    setOtpStep(true);
-    toast.success('OTP sent to your email');
-  } catch (error) {
-    console.error('OTP sending error:', error);
-    toast.error('Failed to send OTP. Please try again.');
-  }
-};
+      // Send OTP
+      await authApi.sendOtp({ email: data.email, purpose: 'register' });
+      setOtpStep(true);
+      toast.success('OTP sent to your email');
+    } catch (error) {
+      console.error('OTP sending error:', error);
+      toast.error('Failed to send OTP. Please try again.');
+    }
+  };
 
   const handleVerifyOtp = async () => {
     try {
@@ -89,7 +87,13 @@ export default function SignupPage() {
       });
 
       if (result?.data?.success && signupData) {
-        await signupTrigger(signupData);
+        const formData = new FormData();
+        formData.append('name', signupData.name);
+        formData.append('email', signupData.email);
+        formData.append('password', signupData.password);
+        formData.append('profile', signupData.profile[0]); // file
+
+        await signupTrigger(formData);
       } else {
         toast.error('OTP verification failed. Please try again.');
       }
@@ -165,6 +169,21 @@ export default function SignupPage() {
                     value: 6,
                     message: 'Password must be at least 6 characters',
                   },
+                })}
+              />
+            </FormControl>
+
+            <FormControl fullWidth>
+              <FormLabel>Profile Photo</FormLabel>
+              <TextField
+                type="file"
+                inputProps={{ accept: 'image/*' }}
+                error={Boolean(errors.profile)}
+                helperText={errors.profile?.message}
+                {...register('profile', {
+                  required: 'Profile image is required',
+                  validate: (files) =>
+                    files.length > 0 || 'Please upload a profile image',
                 })}
               />
             </FormControl>
