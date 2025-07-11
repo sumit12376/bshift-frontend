@@ -134,9 +134,7 @@ export default function PageLogin() {
           gap: 0,
         },
       }}
-    >
-      {/* Left Column */}
-      <Box
+    >      <Box
         sx={{
           textAlign: 'right',
           my: 'auto',
@@ -198,7 +196,7 @@ export default function PageLogin() {
 
         {!otpStep ? (
           <>
-            {/* Email Field */}
+      
             <FormControl fullWidth sx={{ mb: 1.5 }}>
               <FormLabel>Email</FormLabel>
               <TextField
@@ -211,7 +209,7 @@ export default function PageLogin() {
               />
             </FormControl>
 
-            {/* Password Field */}
+           
             <FormControl fullWidth>
               <FormLabel>Password</FormLabel>
               <TextField
@@ -222,8 +220,6 @@ export default function PageLogin() {
                 {...register('password')}
               />
             </FormControl>
-
-            {/* Login Button */}
             <LoadingButton
               fullWidth
               disabled={!isDirty}
@@ -236,7 +232,6 @@ export default function PageLogin() {
           </>
         ) : (
           <>
-            {/* OTP Field */}
             <FormControl fullWidth sx={{ mt: 2 }}>
               <FormLabel>Enter OTP sent to your email</FormLabel>
               <TextField
