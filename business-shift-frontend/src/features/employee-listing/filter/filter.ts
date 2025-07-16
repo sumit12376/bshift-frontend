@@ -12,7 +12,7 @@ export const queryParamsAtoms = atomWithImmer<QueryParams>({
   } ,
   metadata: {
     page: 1,
-    size: 3,
+    size: 6,
     sortBy: EmployeeSortBy.Name,
     sortOrder: SortOrder.Asc,
   },

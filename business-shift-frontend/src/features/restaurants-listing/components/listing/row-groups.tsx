@@ -1,30 +1,32 @@
-'use client'
+"use client";
 
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import { useAtomValue } from 'jotai';
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { useAtomValue } from "jotai";
 
-import { queryParamsAtom } from '@/features/restaurants-listing/state/filter';
-import { RestaurantListingApi } from '@/features/restaurants-listing/api/restaurent-listing-api';
-import { RowGroup } from './row-group';
-import { API_CACHE_KEY } from '@/shared/components/constants/api-cache-key';
-import { useInfinitePagination } from '@/shared/hook/api/core/use-infinite-pagination';
-import { groupRestaurantBySortType } from '@/features/restaurants-listing/utils/group-restaurant-by-name';
+import { queryParamsAtom } from "@/features/restaurants-listing/state/filter";
+import { RestaurantListingApi } from "@/features/restaurants-listing/api/restaurent-listing-api";
+import { RowGroup } from "./row-group";
+import { API_CACHE_KEY } from "@/shared/components/constants/api-cache-key";
+import { useInfinitePagination } from "@/shared/hook/api/core/use-infinite-pagination";
+import { groupRestaurantBySortType } from "@/features/restaurants-listing/utils/group-restaurant-by-name";
 
 export const RowGroups = () => {
   const queryParams = useAtomValue(queryParamsAtom);
 
-  const { 
-    data, 
-    isFetchingMore, 
-    loadMore, 
-    isLoading, 
-    error ,
-        hasMore,
+  const {
+    data,
+    isFetchingMore,
+    loadMore,
+    isLoading,
+    error,
+    hasMore,
     totalLoaded,
     totalDocs,
   } = useInfinitePagination(
-    [API_CACHE_KEY.GET_RESTAURANT_LIST, queryParams],//(1) KEY
-    (page) =>//(2) FETCHER
+    [API_CACHE_KEY.GET_RESTAURANT_LIST, queryParams], // (1) KEY
+    (
+      page //(2) FETCHER
+    ) =>
       RestaurantListingApi.getRestaurants({
         ...queryParams,
         metadata: {
@@ -37,8 +39,8 @@ export const RowGroups = () => {
     }
   );
 
-  console.log('API Data:', data);
-  console.log('Error:', error);
+  console.log("API Data:", data);
+  console.log("Error:", error);
 
   if (isLoading) {
     return (
@@ -61,7 +63,8 @@ export const RowGroups = () => {
     );
   }
 
-  const allRestaurants = data?.flatMap((page) => page?.data?.data?.nodes || []) || [];
+  const allRestaurants =
+    data?.flatMap((page) => page?.data?.data?.nodes || []) || [];
   const groupedRestaurant = groupRestaurantBySortType(allRestaurants);
 
   if (allRestaurants.length === 0) {
@@ -80,23 +83,25 @@ export const RowGroups = () => {
         </Box>
       ))}
 
-            {hasMore ? (
-              <Box display="flex" justifyContent="center" p={2}>
-                <Button 
-                  onClick={loadMore} 
-                  disabled={isFetchingMore}
-                  startIcon={isFetchingMore && <CircularProgress size={20} />}
-                >
-                  {isFetchingMore ? 'Loading...' : `Load More (${totalLoaded} of ${totalDocs})`}
-                </Button>
-              </Box>
-            ) : (
-              <Box display="flex" justifyContent="center" p={2}>
-                <Typography variant="body2" color="textSecondary">
-                  All {totalDocs} employees loaded
-                </Typography>
-              </Box>
-            )}
+      {hasMore ? (
+        <Box display="flex" justifyContent="center" p={2}>
+          <Button
+            onClick={loadMore}
+            disabled={isFetchingMore}
+            startIcon={isFetchingMore && <CircularProgress size={20} />}
+          >
+            {isFetchingMore
+              ? "Loading..."
+              : `Load More (${totalLoaded} of ${totalDocs})`}
+          </Button>
+        </Box>
+      ) : (
+        <Box display="flex" justifyContent="center" p={2}>
+          <Typography variant="body2" color="textSecondary">
+            All {totalDocs} employees loaded
+          </Typography>
+        </Box>
+      )}
     </>
   );
 };

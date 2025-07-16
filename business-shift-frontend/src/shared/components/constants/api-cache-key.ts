@@ -78,6 +78,9 @@ export const API_CACHE_KEY = {
   DELETE_POSITION: 'delete-position',
   GET_DETAILS_POSITION: 'get-details-position',
   EMPLOYEE_DELETE:'employee-delete',
-  EMPLOYEE_UPDATE:'employee-update'
+  EMPLOYEE_UPDATE:'employee-update',
+  GET_MENU: 'get-menu-list'
+
+
 
 } as const;

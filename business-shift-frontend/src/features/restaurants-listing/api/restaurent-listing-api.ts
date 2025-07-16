@@ -9,4 +9,5 @@ export const RestaurantListingApi = {
     .path('/api/restaurants/create')
     .method('post')
     .create(),
+    // getRestaurantWithMenus:fetchClient.path('/api/Menu/ListMenu/:id').method('get').create()
 }
