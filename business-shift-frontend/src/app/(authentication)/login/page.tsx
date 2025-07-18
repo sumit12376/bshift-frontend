@@ -66,7 +66,8 @@ export default function PageLogin() {
 
  const { email, name, id, token } = response.data.user;
 
-
+console.log("iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiicxsknxioasndioasdnojsdioasoci", id)
+Cookies.set("userid",id)
   setUserEmail(email);
   setUserInfo({ email, name, id, token });
 

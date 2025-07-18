@@ -7,6 +7,9 @@ import {
   Typography,
   MenuItem,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'next/navigation';
@@ -18,7 +21,6 @@ type FormFields = {
   price: string;
   description: string;
   category: string;
-  images: FileList;
 };
 
 export default function AddMenuPage() {
@@ -32,10 +34,26 @@ export default function AddMenuPage() {
 
   const [loading, setLoading] = useState(false);
   const [responseMsg, setResponseMsg] = useState('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imageError, setImageError] = useState('');
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    setSelectedImages((prev) => [...prev, ...newFiles]);
+    setImageError(''); // clear error
+  };
 
   const onSubmit = async (data: FormFields) => {
     if (!restaurantId) {
       setResponseMsg('Restaurant ID is missing in URL');
+      return;
+    }
+
+    if (selectedImages.length === 0) {
+      setImageError('At least one image is required.');
       return;
     }
 
@@ -46,8 +64,8 @@ export default function AddMenuPage() {
     formData.append('category', data.category);
     formData.append('restaurantId', restaurantId.toString());
 
-    Array.from(data.images).forEach((file) => {
-      formData.append('Image', file);
+    selectedImages.forEach((file) => {
+      formData.append('Image', file); // assuming backend expects 'Image'
     });
 
     try {
@@ -63,6 +81,7 @@ export default function AddMenuPage() {
       );
       setResponseMsg(response.data?.message || 'Menu created successfully');
       reset();
+      setSelectedImages([]);
     } catch (err) {
       console.error(err);
       setResponseMsg('Failed to create menu item.');
@@ -122,15 +141,29 @@ export default function AddMenuPage() {
           <MenuItem value="Drinks">Drinks</MenuItem>
         </TextField>
 
-        <TextField
-          type="file"
-          fullWidth
-          margin="normal"
-          inputProps={{ multiple: true }}
-          {...register('images', { required: 'Images are required' })}
-          error={!!errors.images}
-          helperText={errors.images?.message}
-        />
+        <FormControl fullWidth margin="normal" error={!!imageError}>
+          <InputLabel shrink>Upload Images</InputLabel>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageChange}
+            style={{ marginTop: 8 }}
+          />
+          <FormHelperText>{imageError}</FormHelperText>
+        </FormControl>
+
+        {/* Preview selected image names */}
+        {selectedImages.length > 0 && (
+          <Box mt={1}>
+            <Typography variant="body2">Selected Images:</Typography>
+            <ul>
+              {selectedImages.map((file, idx) => (
+                <li key={idx}>{file.name}</li>
+              ))}
+            </ul>
+          </Box>
+        )}
 
         <Button
           type="submit"
