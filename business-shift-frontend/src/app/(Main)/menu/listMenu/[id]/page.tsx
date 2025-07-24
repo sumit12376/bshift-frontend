@@ -82,7 +82,8 @@ const handleCreateCart = async () => {
   try {
     setCartLoading(true);
     
-
+const itemss = Object.entries(countMap)
+console.log("itemssss",itemss)
     const items = Object.entries(countMap)
       .filter(([_, quantity]) => quantity > 0)
       .map(([menuItemId, quantity]) => {

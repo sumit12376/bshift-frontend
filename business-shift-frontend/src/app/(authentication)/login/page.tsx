@@ -139,7 +139,7 @@ Cookies.set("userid",id)
         sx={{
           textAlign: 'right',
           my: 'auto',
-          gridColumn: 1,
+          gridColumn: 1,                                             
           [theme.breakpoints.down('md')]: {
             display: 'none',
           },
